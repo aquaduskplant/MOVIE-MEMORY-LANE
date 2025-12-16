@@ -75,9 +75,37 @@
   overflow: hidden;
 }
 
-html,
-body {
+/* Smooth scroll for the whole page */
+html {
   scroll-behavior: smooth;
 }
+
+/* Firefox scrollbar colors */
+html, body {
+  scrollbar-width: thin; /* "auto" | "thin" */
+  scrollbar-color: #ec4899 #020617; 
+  /* thumb       track   (pink 500 on slate-950) */
+}
+
+/* Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #020617; /* slate-950 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ec4899, #a855f7); /* pink-500 → violet-500 */
+  border-radius: 999px;
+  border: 2px solid #020617; /* creates a pill look on dark bg */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #f472b6, #c4b5fd); /* lighter on hover */
+}
+
 
 

@@ -3,6 +3,8 @@ import { Link, useForm, usePage } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AppLayout from '../../Layouts/AppLayout';
 
+const POSTER_BASE = 'https://image.tmdb.org/t/p/w500';
+
 export default function Show() {
   const { movie, memory, auth } = usePage().props;
   const isLoggedIn = !!auth?.user;
@@ -23,12 +25,16 @@ export default function Show() {
 
     post(route('memories.store'), {
       onSuccess: () => {
-        // Trigger big SAVE overlay
         setSaved(true);
-        setTimeout(() => setSaved(false), 1600); // hide after ~1.6s
+        setTimeout(() => setSaved(false), 1600);
       },
     });
   };
+
+  // Use either movie.image from your DB or TMDB poster_path as fallback
+  const posterUrl =
+    movie.image ||
+    (movie.poster_path ? `${POSTER_BASE}${movie.poster_path}` : null);
 
   return (
     <AppLayout>
@@ -42,10 +48,8 @@ export default function Show() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
           >
-            {/* Soft background glow */}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-[3px]" />
 
-            {/* Central burst */}
             <motion.div
               initial={{ scale: 0.7, opacity: 0, y: 40 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -71,7 +75,7 @@ export default function Show() {
               </motion.h1>
 
               <p className="text-sm md:text-base text-slate-200/90 text-center max-w-md">
-                Your memory has been tucked into your&nbsp;
+                Your memory has been tucked into your{' '}
                 <span className="text-pink-300">My Memories</span> timeline.
               </p>
             </motion.div>
@@ -79,25 +83,84 @@ export default function Show() {
         )}
       </AnimatePresence>
 
-      {/* === PAGE CONTENT === */}
-      <div className="max-w-5xl mx-auto px-4 py-10 space-y-10">
-        <Link
-          href={route('movies.index')}
-          className="text-xs text-slate-400 hover:text-pink-300 inline-flex items-center gap-1"
-        >
-          <span>←</span>
-          Back to Movie Memory Lane
-        </Link>
+      {/* === HERO WITH BLURRED POSTER BACKGROUND === */}
+      <section className="relative w-full overflow-hidden border-b border-pink-500/10">
+        {/* solid black base */}
+        <div className="absolute inset-0 z-0 bg-black" />
 
+        {/* blurred movie poster ON TOP of black */}
+        {posterUrl && (
+          <div
+            className="absolute inset-0 z-10 bg-cover bg-center blur-lg opacity-100 scale-110"
+            style={{ backgroundImage: `url(${posterUrl})` }}
+          />
+        )}
+
+        {/* CONTENT – poster left, text right */}
+        <div className="relative z-20 max-w-5xl mx-auto px-4 py-10 md:py-14 flex flex-col md:flex-row gap-8 md:gap-10 items-center md:items-center">
+          {/* Poster – left side */}
+          {posterUrl && (
+            <motion.div
+              className="w-40 sm:w-48 md:w-60 aspect-[2/3] rounded-2xl overflow-hidden border border-white/15 shadow-[0_24px_60px_rgba(0,0,0,0.9)] bg-slate-900/40"
+              initial={{ y: 8, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              whileHover={{
+                y: -6,
+                scale: 1.03,
+                rotate: -0.8,
+                boxShadow: '0 24px 80px rgba(236,72,153,0.65)',
+              }}
+              transition={{ type: 'spring', stiffness: 140, damping: 16 }}
+            >
+              <img
+                src={posterUrl}
+                alt={movie.title}
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+          )}
+
+          {/* Text – right side, arranged like your reference */}
+          <div className="flex-1 flex flex-col items-start gap-3 md:gap-4">
+            {/* back link */}
+            <Link
+              href={route('movies.index')}
+              className="inline-flex items-center gap-1 text-[11px] md:text-xs text-slate-100/90 hover:text-pink-300 transition"
+            >
+              <span>←</span>
+              Back to Movie Memory Lane
+            </Link>
+
+            {/* glowing chip */}
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-pink-400/40 bg-slate-950/80 px-3 py-1 text-[10px] md:text-[11px] uppercase tracking-[0.23em] text-pink-200 shadow-[0_0_24px_rgba(236,72,153,0.7)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-pink-400 animate-pulse" />
+              <span>Studio Ghibli · Featured Film</span>
+            </div>
+
+            {/* year + score + title */}
+            <div className="space-y-1">
+              <p className="text-xs md:text-[11px] uppercase tracking-[0.25em] text-pink-100/90">
+                {movie.release_date} • Score {movie.rt_score}
+              </p>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-white">
+                {movie.title}
+              </h1>
+            </div>
+
+            {/* description line */}
+            <p className="text-sm md:text-base text-slate-100/90 max-w-xl">
+              Capture when this film crossed your path, how it made you feel,
+              and the memory it now holds in your story.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* === PAGE CONTENT BELOW HERO === */}
+      <div className="max-w-5xl mx-auto px-4 py-10 space-y-10">
         <div className="grid md:grid-cols-[3fr,2fr] gap-10 items-start">
           {/* LEFT – MOVIE INFO */}
           <section className="space-y-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-pink-300/70">
-              {movie.release_date} • Score {movie.rt_score}
-            </p>
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-              {movie.title}
-            </h1>
             <p className="text-slate-300 leading-relaxed">
               {movie.description}
             </p>
@@ -105,11 +168,15 @@ export default function Show() {
             <div className="mt-4 grid grid-cols-2 gap-4 text-xs text-slate-300">
               <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-3">
                 <p className="text-slate-400">Director</p>
-                <p className="font-semibold text-slate-100">{movie.director}</p>
+                <p className="font-semibold text-slate-100">
+                  {movie.director}
+                </p>
               </div>
               <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-3">
                 <p className="text-slate-400">Producer</p>
-                <p className="font-semibold text-slate-100">{movie.producer}</p>
+                <p className="font-semibold text-slate-100">
+                  {movie.producer}
+                </p>
               </div>
               <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-3">
                 <p className="text-slate-400">Running time</p>
@@ -119,7 +186,9 @@ export default function Show() {
               </div>
               <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-3">
                 <p className="text-slate-400">Rotten Tomatoes score</p>
-                <p className="font-semibold text-slate-100">{movie.rt_score}</p>
+                <p className="font-semibold text-slate-100">
+                  {movie.rt_score}
+                </p>
               </div>
             </div>
           </section>
@@ -233,7 +302,6 @@ export default function Show() {
                       {memory ? 'Update memory' : 'Save memory'}
                     </button>
 
-                    {/* small subtle text still there if you want it */}
                     {saved && (
                       <p className="text-xs text-emerald-300">
                         Saved! Check it on your My Memories page.
